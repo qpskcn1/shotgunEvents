@@ -116,6 +116,12 @@ def download_submission(sg, logger, event, args):
     path = get_file_path(sg, event_project, version)
     sg.download_attachment(version["sg_uploaded_movie"], file_path=path)
     logger.info("File downloaded to {}".format(path))
+    # update version's "Path to Movie"
+    sg.update(
+        entity_type,
+        entity_id,
+        {"sg_path_to_movie": path}
+    )
 
 
 def get_file_path(sg, project, version):
@@ -134,6 +140,7 @@ def get_file_path(sg, project, version):
     engine = mgr.bootstrap_engine("tk-shell",
                                   entity={"type": "Project", "id": project_id})
     tk = engine.sgtk
+    # get all required fields to fill temolate
     sg_asset_type = sg.find_one(
         "Asset",
         [["id", "is", version["entity"]["id"]]],
@@ -164,6 +171,6 @@ def get_file_path(sg, project, version):
     ps_template = tk.templates["photoshop_asset_work"]
     path = ps_template.apply_fields(work_fields)
     engine.ensure_folder_exists(os.path.dirname(path))
-    # destroy
+    # destroy engine
     engine.destroy()
     return path
